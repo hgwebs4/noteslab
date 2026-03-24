@@ -1,0 +1,31 @@
+name: Clean Cargo Cache
+
+on:
+  workflow_dispatch: # Isse aap manually "Actions" tab se run kar sakte hain
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Rust Nightly
+        uses: dtolnay/rust-toolchain@nightly
+
+      - name: Purge All Cargo Cache & Indices
+        run: |
+          echo "Cleaning Cargo registries and cache..."
+          rm -rf ~/.cargo/registry/index/
+          rm -rf ~/.cargo/registry/cache/
+          rm -rf ~/.cargo/git/db/
+          
+          echo "Cleaning project build artifacts..."
+          # Agar aapka main folder 'noteslab-data-uniffi' hai toh:
+          cd noteslab-data-uniffi && cargo clean || true
+          
+          echo "Removing old Cargo.lock to force regeneration..."
+          rm -f Cargo.lock
+          
+      - name: Verify Clean State
+        run: cargo --version && ls -R
