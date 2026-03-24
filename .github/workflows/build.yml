@@ -19,11 +19,13 @@ jobs:
         fetch-depth: 0
         
         # ------ temporary ---------
-            - name: Force Update Submodules
+            # --- YE NAYA STEP ADD KAREIN (Step C) ---
+    - name: Force Update Submodules
       run: |
         git submodule init
-        git submodule update --remote --recursive
-        
+        git submodule update --init --recursive
+        ls -R noteslab-data/ # Isse check hoga ki Cargo.toml aaya ya nahi
+    # ----------------------------------------
         # ------ temporary ---------
         
     - name: Set up JDK 17
