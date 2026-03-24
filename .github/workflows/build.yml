@@ -20,22 +20,6 @@ jobs:
         
         # ------ temporary ---------
         
-            - name: Create Dummy noteslab-data if missing
-      run: |
-        if [ ! -d "noteslab-data" ]; then
-          mkdir -p noteslab-data/src
-          echo '[package]' > noteslab-data/Cargo.toml
-          echo 'name = "noteslab-data"' >> noteslab-data/Cargo.toml
-          echo 'version = "0.1.0"' >> noteslab-data/Cargo.toml
-          echo 'edition = "2021"' >> noteslab-data/Cargo.toml
-          echo 'fn main() {}' > noteslab-data/src/lib.rs
-          echo "Created dummy noteslab-data folder"
-        fi
-
-    - name: Build noteslab-data-uniffi
-      working-directory: ./noteslab-data-uniffi
-      run: |
-        ./release.sh arm64-v8a
         
             # --- YE NAYA STEP ADD KAREIN (Step C) ---
     - name: Force Update Submodules
@@ -67,6 +51,23 @@ jobs:
         EXPECTED_NDK_VERSION=27.1.12297006
         echo "Expected Android NDK: $EXPECTED_NDK_VERSION"
         echo "ANDROID_NDK_VERSION=$EXPECTED_NDK_VERSION" >> $GITHUB_ENV
+        
+        
+        # --- YE WALA HISSA ADD KAREIN ---
+    - name: Create Dummy noteslab-data if missing
+      run: |
+        if [ ! -d "noteslab-data" ]; then
+          mkdir -p noteslab-data/src
+          echo '[package]' > noteslab-data/Cargo.toml
+          echo 'name = "noteslab-data"' >> noteslab-data/Cargo.toml
+          echo 'version = "0.1.0"' >> noteslab-data/Cargo.toml
+          echo 'edition = "2021"' >> noteslab-data/Cargo.toml
+          echo 'fn main() {}' > noteslab-data/src/lib.rs
+          echo "Dummy folder created successfully"
+        fi
+        
+        
+        
     - name: Build noteslab-data-uniffi
       working-directory: ./noteslab-data-uniffi
       run: |
