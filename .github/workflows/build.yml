@@ -18,12 +18,6 @@ jobs:
         submodules: 'recursive'
         fetch-depth: 0
         
-        # ------ temporary ---------
-        
-        
-           
-        # ------ temporary ---------
-        
     - name: Set up JDK 17
       uses: actions/setup-java@v4
       with:
@@ -45,22 +39,6 @@ jobs:
         EXPECTED_NDK_VERSION=27.1.12297006
         echo "Expected Android NDK: $EXPECTED_NDK_VERSION"
         echo "ANDROID_NDK_VERSION=$EXPECTED_NDK_VERSION" >> $GITHUB_ENV
-        
-        
-        # --- YE WALA HISSA ADD KAREIN ---
-    - name: Create Dummy noteslab-data if missing
-      run: |
-        if [ ! -d "noteslab-data" ]; then
-          mkdir -p noteslab-data/src
-          echo '[package]' > noteslab-data/Cargo.toml
-          echo 'name = "noteslab-data"' >> noteslab-data/Cargo.toml
-          echo 'version = "0.1.0"' >> noteslab-data/Cargo.toml
-          echo 'edition = "2021"' >> noteslab-data/Cargo.toml
-          echo 'fn main() {}' > noteslab-data/src/lib.rs
-          echo "Dummy folder created successfully"
-        fi
-        
-        
         
     - name: Build noteslab-data-uniffi
       working-directory: ./noteslab-data-uniffi
