@@ -1,0 +1,4 @@
+- RTL language support
+- Theme switching support
+- Improved dark theme experience
+**Full Changelog**: https://github.com/hgwebs1/noteslab/releases/tag/v0.1.0-beta.1

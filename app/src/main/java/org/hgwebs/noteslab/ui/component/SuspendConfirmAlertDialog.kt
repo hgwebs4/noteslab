@@ -1,0 +1,82 @@
+package org.hgwebs.noteslab.ui.component
+
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.res.stringResource
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
+import org.hgwebs.noteslab.R
+
+@Composable
+fun SuspendConfirmAlertDialog(
+    scope: CoroutineScope = rememberCoroutineScope(),
+    icon: @Composable (() -> Unit)? = null,
+    inProgressIcon: @Composable ((Modifier) -> Unit)? = null,
+    title: @Composable (() -> Unit)? = null,
+    text: @Composable (() -> Unit)? = null,
+    onDismissRequest: () -> Unit,
+    onConfirm: suspend () -> Unit,
+    onConfirmFinished: () -> Unit,
+) {
+    var inProgress by remember { mutableStateOf(false) }
+    val inProgressAnimation by rememberInfiniteTransition().animateFloat(
+        initialValue = 1f,
+        targetValue = 0f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(300, easing = LinearEasing)
+        )
+    )
+    AlertDialog(
+        onDismissRequest = {
+            if (!inProgress) {
+                onDismissRequest()
+            }
+        },
+        confirmButton = {
+            TextButton(enabled = !inProgress, onClick = {
+                inProgress = true
+                scope.launch {
+                    onConfirm()
+                    inProgress = false
+                    onConfirmFinished()
+                }
+            }) {
+                Text(text = stringResource(id = R.string.confirm))
+            }
+        },
+        dismissButton = {
+            TextButton(enabled = !inProgress, onClick = {
+                onDismissRequest()
+            }) {
+                Text(text = stringResource(id = R.string.cancel))
+            }
+        },
+        icon = {
+            if (inProgress) {
+                if (inProgressIcon != null) {
+                    inProgressIcon(Modifier.alpha(inProgressAnimation))
+                }
+            } else {
+                if (icon != null) {
+                    icon()
+                }
+            }
+        },
+        title = title,
+        text = text
+    )
+}

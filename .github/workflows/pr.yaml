@@ -1,0 +1,57 @@
+name: PR
+
+on:
+  pull_request:
+    branches: [ "main" ]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        submodules: 'recursive'
+        fetch-depth: 0
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+        cache: gradle
+    - name: Set up Rust
+      uses: dtolnay/rust-toolchain@stable
+      with:
+        targets: 'aarch64-linux-android,armv7-linux-androideabi,x86_64-linux-android,i686-linux-android'
+    # See https://github.com/Bromeon/godot-rust/blob/master/.github/workflows/full-ci.yml
+    - name: "Write Android NDK version"
+      run: |
+        echo $ANDROID_SDK_ROOT
+        HIGHEST_NDK_VERSION=$(ls $ANDROID_SDK_ROOT/ndk | tail -n1)
+        echo "Highest Android NDK: $HIGHEST_NDK_VERSION"
+        EXPECTED_NDK_VERSION=27.1.12297006
+        echo "Expected Android NDK: $EXPECTED_NDK_VERSION"
+        echo "ANDROID_NDK_VERSION=$EXPECTED_NDK_VERSION" >> $GITHUB_ENV
+    - name: Check noteslab-data-uniffi
+      working-directory: ./noteslab-data-uniffi
+      run: |
+        ANDROID_NDK_TOOLCHAIN_BIN=$ANDROID_SDK_ROOT/ndk/$ANDROID_NDK_VERSION/toolchains/llvm/prebuilt/linux-x86_64/bin
+        export AR=$ANDROID_NDK_TOOLCHAIN_BIN/llvm-ar
+
+        echo "Building aarch64-linux-android"
+        export CC=$ANDROID_NDK_TOOLCHAIN_BIN/aarch64-linux-android28-clang
+        export CXX=$ANDROID_NDK_TOOLCHAIN_BIN/aarch64-linux-android28-clang++
+        export CARGO_TARGET_AARCH64_LINUX_ANDROID_LINKER=$ANDROID_NDK_TOOLCHAIN_BIN/aarch64-linux-android28-clang
+        cargo fmt --check
+        cargo clippy --no-deps
+        cargo build --target aarch64-linux-android --verbose
+    - name: Setup Gradle
+      uses: gradle/actions/setup-gradle@v4
+    - name: Execute Gradle build debug
+      run: ./gradlew buildDebug
+    - name: Execute Gradle lint report debug
+      run: ./gradlew lintReportDebug

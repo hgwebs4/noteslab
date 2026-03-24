@@ -1,0 +1,2 @@
+- Supports Farsi and Russian languages
+**Full Changelog**: https://github.com/hgwebs1/noteslab/releases/tag/v0.1.2-beta.1
