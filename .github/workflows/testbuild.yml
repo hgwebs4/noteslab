@@ -3,15 +3,18 @@ name: Test Build (Fast)
 on:
   push:
     branches: [ "main" ]
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-    # Latest v4.x branch (Auto-updates to latest patch)
+    # Latest Checkout v4.2.2 (2026 stable)
+    # submodules: 'recursive' is CRITICAL here
     - uses: actions/checkout@v4
       with:
-        fetch-depth: 1 
+        submodules: 'recursive'
+        fetch-depth: 0 # Full history kabhi-kabhi submodules ke liye zaruri hoti hai
 
     - name: Set up JDK 25
       uses: actions/setup-java@v4
@@ -34,6 +37,15 @@ jobs:
     - name: Setup Gradle
       uses: gradle/actions/setup-gradle@v4
 
+    # Debugging step: Isse pata chal jayega ki files wahan hain ya nahi
+    - name: Verify Directory Structure
+      run: |
+        ls -R noteslab-data-uniffi/
+        if [ ! -f "noteslab-data-uniffi/noteslab-data/Cargo.toml" ]; then
+          echo "ERROR: noteslab-data/Cargo.toml not found!"
+          exit 1
+        fi
+
     - name: Build Rust (arm64)
       working-directory: ./noteslab-data-uniffi
       run: |
@@ -41,7 +53,6 @@ jobs:
         ./release.sh arm64-v8a
 
     - name: Build Debug APK
-      # assembleDebug release se kafi fast hota hai kyunki isme Proguard/R8 nahi chalta
       run: ./gradlew :app:assembleDebug --parallel --no-daemon
 
     - name: Upload Test APK
