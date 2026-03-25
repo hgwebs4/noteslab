@@ -1,9 +1,8 @@
 name: Test Build (ARM64 APK Only)
 
 on:
-  push:
+   push:
     branches: [ "main" ]
-      workflow_dispatch:
 env:
   CARGO_TERM_COLOR: always
 
