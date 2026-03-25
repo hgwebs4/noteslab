@@ -13,104 +13,104 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    # -------------------------
-    # Checkout
-    # -------------------------
-    - name: Checkout repo
-      uses: actions/checkout@v4
-      with:
-        submodules: recursive
-        fetch-depth: 0
+      # -------------------------
+      # Checkout
+      # -------------------------
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 0
 
-    # -------------------------
-    # Java + Gradle
-    # -------------------------
-    - name: Set up JDK 17
-      uses: actions/setup-java@v4
-      with:
-        java-version: '17'
-        distribution: 'temurin'
-        cache: gradle
+      # -------------------------
+      # Java + Gradle
+      # -------------------------
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: gradle
 
-    - name: Setup Gradle
-      uses: gradle/actions/setup-gradle@v4
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
 
-    # -------------------------
-    # Rust Toolchain
-    # -------------------------
-    - name: Set up Rust
-      uses: dtolnay/rust-toolchain@nightly
-      with:
-        toolchain: nightly
-        targets: aarch64-linux-android
+      # -------------------------
+      # Rust Toolchain
+      # -------------------------
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@nightly
+        with:
+          toolchain: nightly
+          targets: aarch64-linux-android
 
-    # -------------------------
-    # Rust Cache
-    # -------------------------
-    - name: Cache Rust
-      uses: actions/cache@v4
-      with:
-        path: |
-          ~/.cargo/registry
-          ~/.cargo/git
-          noteslab-data-uniffi/target
-        key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-        restore-keys: |
-          ${{ runner.os }}-cargo-
+      # -------------------------
+      # Rust Cache
+      # -------------------------
+      - name: Cache Rust
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            noteslab-data-uniffi/target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-
 
-    # -------------------------
-    # Android NDK setup
-    # -------------------------
-    - name: Set Android NDK
-      run: |
-        HIGHEST_NDK_VERSION=$(ls $ANDROID_SDK_ROOT/ndk | tail -n1)
-        echo "ANDROID_NDK_ROOT=$ANDROID_SDK_ROOT/ndk/$HIGHEST_NDK_VERSION" >> $GITHUB_ENV
+      # -------------------------
+      # Android NDK setup
+      # -------------------------
+      - name: Set Android NDK
+        run: |
+          HIGHEST_NDK_VERSION=$(ls $ANDROID_SDK_ROOT/ndk | tail -n1)
+          echo "ANDROID_NDK_ROOT=$ANDROID_SDK_ROOT/ndk/$HIGHEST_NDK_VERSION" >> $GITHUB_ENV
 
-    # -------------------------
-    # Rust Build (ARM64 only)
-    # -------------------------
-    - name: Build Rust (cached ARM64)
-      working-directory: ./noteslab-data-uniffi
-      run: |
-        chmod +x ./testrelease.sh
-        ./testrelease.sh
+      # -------------------------
+      # Rust Build (ARM64 only)
+      # -------------------------
+      - name: Build Rust (cached ARM64)
+        working-directory: ./noteslab-data-uniffi
+        run: |
+          chmod +x ./testrelease.sh
+          ./testrelease.sh
 
-    # -------------------------
-    # Keystore setup
-    # -------------------------
-    - name: Decode Keystore
-      env:
-        ENCODED_STRING: ${{ secrets.SIGNING_KEY }}
-        SIGNING_KEY_ALIAS: ${{ secrets.ALIAS }}
-        SIGNING_KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
-        SIGNING_STORE_PASSWORD: ${{ secrets.KEY_STORE_PASSWORD }}
-      run: |
-        TMP_KEYSTORE_FILE_PATH="${GITHUB_WORKSPACE}/upload-keystore.jks"
-        echo $ENCODED_STRING | base64 --decode > "$TMP_KEYSTORE_FILE_PATH"
+      # -------------------------
+      # Keystore setup
+      # -------------------------
+      - name: Decode Keystore
+        env:
+          ENCODED_STRING: ${{ secrets.SIGNING_KEY }}
+          SIGNING_KEY_ALIAS: ${{ secrets.ALIAS }}
+          SIGNING_KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+          SIGNING_STORE_PASSWORD: ${{ secrets.KEY_STORE_PASSWORD }}
+        run: |
+          TMP_KEYSTORE_FILE_PATH="${GITHUB_WORKSPACE}/upload-keystore.jks"
+          echo $ENCODED_STRING | base64 --decode > "$TMP_KEYSTORE_FILE_PATH"
 
-        echo "storePassword=${SIGNING_STORE_PASSWORD}" >> keystore.properties
-        echo "keyPassword=${SIGNING_KEY_PASSWORD}" >> keystore.properties
-        echo "keyAlias=${SIGNING_KEY_ALIAS}" >> keystore.properties
-        echo "storeFile=${TMP_KEYSTORE_FILE_PATH}" >> keystore.properties
+          echo "storePassword=${SIGNING_STORE_PASSWORD}" >> keystore.properties
+          echo "keyPassword=${SIGNING_KEY_PASSWORD}" >> keystore.properties
+          echo "keyAlias=${SIGNING_KEY_ALIAS}" >> keystore.properties
+          echo "storeFile=${TMP_KEYSTORE_FILE_PATH}" >> keystore.properties
 
-    # -------------------------
-    # Build APK ONLY (ARM64 via CLI override)
-    # -------------------------
-    - name: Build Release APK (ARM64 only)
-      run: ./gradlew :app:assembleRelease -Pandroid.injected.build.abi=arm64-v8a
+      # -------------------------
+      # Build APK ONLY (ARM64 via CLI override)
+      # -------------------------
+      - name: Build Release APK (ARM64 only)
+        run: ./gradlew :app:assembleRelease -Pandroid.injected.build.abi=arm64-v8a
 
-    
-    # (Optional) Verify ABI
-    # -------------------------
-    - name: Verify APK ABI
-      run: unzip -l app/build/outputs/apk/release/*.apk | grep lib/ || true
+      # -------------------------
+      # (Optional) Verify ABI
+      # -------------------------
+      - name: Verify APK ABI
+        run: unzip -l app/build/outputs/apk/release/*.apk | grep lib/ || true
 
-    # -------------------------
-    # Upload APK ONLY
-    # -------------------------
-    - name: Upload APK
-  uses: actions/upload-artifact@v4
-  with:
-    name: ARM64-APK
-    path: |
-      app/build/intermediates/apk/release/*.apk
+      # -------------------------
+      # Upload APK ONLY
+      # -------------------------
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: ARM64-APK
+          path: |
+            app/build/intermediates/apk/release/*.apk
