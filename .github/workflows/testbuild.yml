@@ -3,18 +3,14 @@ name: Test Build (Fast)
 on:
   push:
     branches: [ "main" ]
- 
-
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-    # Latest Checkout v4.2.2 (2026 stable)
-    # submodules: 'recursive' is CRITICAL here
     - uses: actions/checkout@v4
       with:
         submodules: 'recursive'
-        fetch-depth: 0 # Full history kabhi-kabhi submodules ke liye zaruri hoti hai
+        fetch-depth: 0 
 
     - name: Set up JDK 21
       uses: actions/setup-java@v4
@@ -29,19 +25,16 @@ jobs:
         toolchain: nightly
         targets: 'aarch64-linux-android'
 
-        - name: Rust Cache
+    # Fixed Indentation here
+    - name: Rust Cache
       uses: swatinem/rust-cache@v2
       with:
-        # Aapka rust code jis folder mein hai uska path
         workspaces: "noteslab-data-uniffi -> target"
-        # Shared key taaki har build mein purana cache mile
         shared-key: "noteslab-rust-cache"
-
 
     - name: Setup Gradle
       uses: gradle/actions/setup-gradle@v4
 
-    # Debugging step: Isse pata chal jayega ki files wahan hain ya nahi
     - name: Verify Directory Structure
       run: |
         ls -R noteslab-data-uniffi/
@@ -57,7 +50,8 @@ jobs:
         ./release.sh arm64-v8a
 
     - name: Build Debug APK
-      run: ./gradlew :app:assembleDebug --parallel --no-daemon
+      # 'clean' add kiya hai taaki purane resource errors na aayein
+      run: ./gradlew clean :app:assembleDebug --parallel --no-daemon
 
     - name: Upload Test APK
       uses: actions/upload-artifact@v4
