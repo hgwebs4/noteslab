@@ -99,13 +99,13 @@ jobs:
     - name: Build Release APK (ARM64 only)
       run: ./gradlew :app:assembleRelease -Pandroid.injected.build.abi=arm64-v8a
 
-
-
-
-- name: Find APK
-  run: find . -name "*.apk"
-  
-  
+    # -------------------------
+    # Debug APK location
+    # -------------------------
+    - name: Find APK
+      run: |
+        echo "=== APK FILES ==="
+        find . -name "*.apk"
     # -------------------------
     # (Optional) Verify ABI
     # -------------------------
