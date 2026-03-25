@@ -3,6 +3,7 @@ name: Test Build (ARM64 APK Only)
 on:
   push:
     branches: [ "main" ]
+      workflow_dispatch:
 env:
   CARGO_TERM_COLOR: always
 
@@ -29,7 +30,7 @@ jobs:
       uses: dtolnay/rust-toolchain@nightly
       with:
         toolchain: nightly
-        targets: 'aarch64-linux-android,armv7-linux-androideabi,x86_64-linux-android,i686-linux-android'
+        targets: 'aarch64-linux-android'
     # See https://github.com/Bromeon/godot-rust/blob/master/.github/workflows/full-ci.yml
     - name: "Write Android NDK version"
       run: |
@@ -44,7 +45,10 @@ jobs:
       working-directory: ./noteslab-data-uniffi
       run: |
         env
-        ./testrelease.sh arm64-v8a
+        ./release.sh arm64-v8a
+        ./release.sh armeabi-v7a
+        ./release.sh x86_64
+        ./release.sh x86
     - name: Decode Keystore
       env:
         ENCODED_STRING: ${{ secrets.SIGNING_KEY }}
