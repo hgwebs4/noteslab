@@ -53,10 +53,7 @@ jobs:
         # Rust linker ko batana ki clang kahan hai
         echo "PATH=$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin:$PATH" >> $GITHUB_ENV
 
-    - name: Fix Manifest Icon Error (Auto)
-      run: |
-        sed -i 's/android:roundIcon="@mipmap\/ic_launcher_round"/android:roundIcon="@mipmap\/ic_launcher"/g' app/src/main/AndroidManifest.xml
-
+    
     - name: Build Rust Library (arm64)
       working-directory: ./noteslab-data-uniffi
       env:
