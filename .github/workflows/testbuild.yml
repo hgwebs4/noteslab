@@ -72,8 +72,8 @@ jobs:
     - name: Build Rust (cached ARM64)
       working-directory: ./noteslab-data-uniffi
       run: |
-        chmod +x ../testrelease.sh
-        ../testrelease.sh
+        chmod +x ./testrelease.sh
+        ./testrelease.sh
 
     # -------------------------
     # Keystore setup
