@@ -7,21 +7,17 @@ on:
 
 env:
   CARGO_TERM_COLOR: always
-  # Rust build ko speed up karne ke liye environment variables
   CARGO_INCREMENTAL: 1
-  RUST_BACKTRACE: 1
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-    # 1. Latest Checkout v4.2.2 (2026 Stable)
     - uses: actions/checkout@v4.2.2
       with:
         submodules: 'recursive'
         fetch-depth: 1 
 
-    # 2. JDK 21 (Gradle 8.5 ke liye perfect match)
     - name: Set up JDK 21
       uses: actions/setup-java@v4.7.0
       with:
@@ -29,43 +25,50 @@ jobs:
         distribution: 'temurin'
         cache: gradle
 
-    # 3. Rust Nightly Setup (Latest)
     - name: Set up Rust Nightly
       uses: dtolnay/rust-toolchain@nightly
       with:
         toolchain: nightly
         targets: 'aarch64-linux-android'
 
-    # 4. Optimized Rust Cache (Subfolder Support)
     - name: Rust Cache
       uses: swatinem/rust-cache@v2.7.5
       with:
-        # Cargo.toml jis folder mein hai uska path
         workspaces: "noteslab-data-uniffi -> target"
-        # Key versioning taaki cache mismatch na ho
-        key: "v2-rust-arm64"
+        shared-key: "noteslab-v2"
 
-    # 5. Gradle Setup
     - name: Setup Gradle
       uses: gradle/actions/setup-gradle@v4.3.0
-      with:
-        cache-read-only: false
 
-    # 6. Build Rust (Direct Command - No release.sh)
-    # Testing ke liye --release skip kar rahe hain (Speed +++)
+    # Ye step NDK ko dhund kar environment variables set karega
+    - name: Setup Android NDK
+      run: |
+        # GitHub Runners par NDK default path yahi hota hai
+        ANDROID_NDK_HOME=$ANDROID_SDK_ROOT/ndk-bundle
+        if [ ! -d "$ANDROID_NDK_HOME" ]; then
+          # Agar bundle nahi hai, toh latest version check karein
+          ANDROID_NDK_HOME=$(ls -d $ANDROID_SDK_ROOT/ndk/* | tail -1)
+        fi
+        echo "ANDROID_NDK_HOME=$ANDROID_NDK_HOME" >> $GITHUB_ENV
+        # Rust linker ko batana ki clang kahan hai
+        echo "PATH=$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin:$PATH" >> $GITHUB_ENV
+
+    - name: Fix Manifest Icon Error (Auto)
+      run: |
+        sed -i 's/android:roundIcon="@mipmap\/ic_launcher_round"/android:roundIcon="@mipmap\/ic_launcher"/g' app/src/main/AndroidManifest.xml
+
     - name: Build Rust Library (arm64)
       working-directory: ./noteslab-data-uniffi
-      run: |
-        cargo build --target aarch64-linux-android
-        # Agar UniFFI bindings generate karni hain toh yahan command add karein
-        # Example: cargo run --bin uniffi-bindgen generate ... 
+      env:
+        # Rust compiler ko linker ka sahi rasta dena
+        CC_aarch64_linux_android: ${{ env.ANDROID_NDK_HOME }}/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android34-clang
+        AR_aarch64_linux_android: ${{ env.ANDROID_NDK_HOME }}/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-ar
+        CARGO_TARGET_AARCH64_LINUX_ANDROID_LINKER: ${{ env.ANDROID_NDK_HOME }}/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android34-clang
+      run: cargo build --target aarch64-linux-android
 
-    # 7. Android Build (Debug APK)
     - name: Build Debug APK
-      # --build-cache aur parallel execution se maximum speed
       run: ./gradlew :app:assembleDebug --parallel --no-daemon --build-cache
 
-    # 8. Artifact Upload
     - name: Upload Test APK
       uses: actions/upload-artifact@v4.6.1
       with:
