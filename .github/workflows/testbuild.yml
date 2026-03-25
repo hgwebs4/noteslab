@@ -29,10 +29,14 @@ jobs:
         toolchain: nightly
         targets: 'aarch64-linux-android'
 
-    - name: Rust Cache
+        - name: Rust Cache
       uses: swatinem/rust-cache@v2
       with:
-        workspaces: "./noteslab-data-uniffi -> target"
+        # Aapka rust code jis folder mein hai uska path
+        workspaces: "noteslab-data-uniffi -> target"
+        # Shared key taaki har build mein purana cache mile
+        shared-key: "noteslab-rust-cache"
+
 
     - name: Setup Gradle
       uses: gradle/actions/setup-gradle@v4
